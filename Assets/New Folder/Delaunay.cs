@@ -12,48 +12,63 @@ struct EdgeToFlip{
 	public Edge e;
 }
 
-public class Delaunay : MonoBehaviour {
+public class Delaunay {
 
-	private int polygonNumber = 1000;
+
 	List<Vector2> points = new List<Vector2>();
 	int pointCursor = 0;
 
-	List<Triangle> triangleList = new List<Triangle>();
+	public List<Triangle> triangleList = new List<Triangle>();
 	List<Triangle> triangleToAddList = new List<Triangle>();
 
 	List<EdgeToFlip> edgeToFlipList = new List<EdgeToFlip>();
 
 	List<Vector2> gizDebug = new List<Vector2>();
 
-	int debugMode = 1;
-	int debugTriangleIndex = 0;
-	int debugIterate = 0;
+	public int debugMode = 1;
+	public int debugTriangleIndex = 0;
+	public int debugIterate = 0;
 
-	/*public void Delaunay(int width, int height, List<Vector2> points)
+	public enum DelaunayMode {
+		stepByStep 		= 1,
+		stepByStepAuto 	= 2,
+		auto			= 3,
+		showTriangle	= 4
+	}
+	
+	// Auto by default
+	public DelaunayMode delaunayMode = DelaunayMode.stepByStep;
+
+	public Delaunay(int width, int height, List<Vector2> _points)
 	{
-
-	}*/
-
-	// Use this for initialization
-	void Start () {
-		//points = CreateRandomPoint();
-		// TODO Geer les point au meme endroit!
+		EdgeMaintener.edgeList.Clear();
 
 		points.Add(new Vector2(0,0));
-		points.Add(new Vector2(0,20));
-		points.Add(new Vector2(20,0));
-		points.Add(new Vector2(20,20));
-		pointCursor = 4;	
-	
-
-		points.AddRange(CreateRandomPoint());
-
+		points.Add(new Vector2(0,height));
+		points.Add(new Vector2(width,0));
+		points.Add(new Vector2(width,height));
+		pointCursor = 4;			
+		
+		points.AddRange(_points);
+		
 		triangleList.Add(new Triangle(new Vector2(0,0), new Vector2(0,20), new Vector2(20,20)));
 		triangleList.Add(new Triangle(new Vector2(0,0), new Vector2(20,0), new Vector2(20,20)));
-
 	}
 
-	void auto()
+
+	public void Clear()
+	{
+
+	}
+	public void Update()
+	{
+		if(delaunayMode == DelaunayMode.stepByStepAuto)
+		{		
+			StepByStepNext();
+		}
+	}
+
+	public void Auto()
 	{
 		_Debug.allowDebug = false;
 
@@ -88,6 +103,7 @@ public class Delaunay : MonoBehaviour {
 				}
 			}		
 
+			while(edgeToFlipList.Count > 0)
 			for (int j = edgeToFlipList.Count-1; j >= 0; j--) 
 			{
 				flipEdge(edgeToFlipList[j].e, edgeToFlipList[j].v);
@@ -99,7 +115,7 @@ public class Delaunay : MonoBehaviour {
 
 	}
 
-	void step1()
+	public void StepByStepNext()
 	{
 		
 		//Debug.ClearDeveloperConsole();
@@ -427,16 +443,6 @@ public class Delaunay : MonoBehaviour {
 	}
 
 	
-	// Update is called once per frame
-	void Update () {
-		//if(pointCursor > 19) return;
-		if(debugMode == 3)
-		{		
-			step1();
-			debugTriangleIndex = -1;
-		}
-
-	}
 
 
 	private void insertPointIn(Vector2 p, Triangle t)
@@ -647,38 +653,12 @@ public class Delaunay : MonoBehaviour {
 		}
 	}*/
 	
-	private List<Vector2> CreateRandomPoint() {
-		// Use Vector2f, instead of Vector2
-		// Vector2f is pretty much the same than Vector2, but like you could run Voronoi in another thread
-		List<Vector2> points = new List<Vector2>();
-		for (int i = 0; i < polygonNumber; i++) {
-			points.Add(new Vector2(UnityEngine.Random.Range(0.2f,19.8f), UnityEngine.Random.Range(0.2f,19.8f)));
-		}
-		
-		return points;
-	}
 
-	/*private List<Vector2> CreateRandomPoint() {
-		List<Vector2> points = new List<Vector2>();
-		//for (int i = 0; i < polygonNumber; i++) {
-			for(float x = 0.2f; x < 19.8f; x+=0.9f)
-			{
-				for(float y = 0.2f; y < 19.8f; y+=0.9f)
-				{
-					points.Add(new Vector2(x,y));
-				}
-			}
-
-		//}
-		
-		return points;
-	}*/
-
-	void OnDrawGizmos() {
+	public void OnDrawGizmos() {
 
 
 
-		if(debugMode == 1 || debugMode == 3)
+		if(delaunayMode == DelaunayMode.auto || delaunayMode == DelaunayMode.stepByStep || delaunayMode == DelaunayMode.stepByStepAuto)
 		{
 			if(triangleList.Count > 0)
 			{
@@ -717,23 +697,13 @@ public class Delaunay : MonoBehaviour {
 				Gizmos.color = Color.white;
 				Gizmos.DrawLine(gizDebug[0], gizDebug[1]);
 			}
-			
-			/*for (int i = 0; i < gizDebug.Count; i+=2) {
-			Gizmos.color = Color.white;
-			int f = i+1;
-			Gizmos.DrawLine(gizDebug[i], gizDebug[f]);
 
-			_Debug.Log("Draw a line between "+gizDebug[i].x+":"+gizDebug[i].y+" and "+gizDebug[f].x+":"+gizDebug[f].y);
-			}*/
 		}
 
-		else if(debugMode == 2)
+		else if(delaunayMode == DelaunayMode.showTriangle)
 		{
 			for (int i = 0; i < triangleList.Count; i++) {
 				Gizmos.color = Color.grey;
-				/*Gizmos.DrawLine(triangleList[i].a, triangleList[i].b);
-				Gizmos.DrawLine(triangleList[i].b, triangleList[i].c);
-				Gizmos.DrawLine(triangleList[i].c, triangleList[i].a);*/
 
 				Gizmos.DrawLine(triangleList[i].edgeList[0].a, triangleList[i].edgeList[0].b);
 				Gizmos.DrawLine(triangleList[i].edgeList[1].a, triangleList[i].edgeList[1].b);
@@ -745,10 +715,7 @@ public class Delaunay : MonoBehaviour {
 
 			Gizmos.color = triangleList[debugTriangleIndex].color;
 			Gizmos.color = Color.green;
-			/*Gizmos.DrawLine(triangleList[i].a, triangleList[i].b);
-			Gizmos.DrawLine(triangleList[i].b, triangleList[i].c);
-			Gizmos.DrawLine(triangleList[i].c, triangleList[i].a);*/
-			
+				
 			Gizmos.DrawLine(triangleList[debugTriangleIndex].edgeList[0].a, triangleList[debugTriangleIndex].edgeList[0].b);
 			Gizmos.DrawLine(triangleList[debugTriangleIndex].edgeList[1].a, triangleList[debugTriangleIndex].edgeList[1].b);
 			Gizmos.DrawLine(triangleList[debugTriangleIndex].edgeList[2].a, triangleList[debugTriangleIndex].edgeList[2].b);
@@ -772,61 +739,16 @@ public class Delaunay : MonoBehaviour {
 				}
 			}
 
-
 			Gizmos.DrawWireSphere(triangleList[debugTriangleIndex].circumCenter, triangleList[debugTriangleIndex].circumRadius);
 
 		}
-		else if(debugMode == 4)
-		{
-			//createVoronoi();
-		}
 
 
 
 		
 	}
 
-	void OnGUI () {
-		
-		
-		if (GUI.Button (new Rect (0,10,150,100), "Step")) {
-			debugMode = 1;
-			step1();
-			debugTriangleIndex = -1;
-		}
-		if (GUI.Button (new Rect (150,10,150,100), "Auto")) {
-			debugMode = 3;
-			step1();
-			debugTriangleIndex = -1;
-		}
-		if (GUI.Button (new Rect (300,10,150,100), "Show triangle")) {
-			debugMode = 2;
-			if(debugTriangleIndex < triangleList.Count-1)
-			{
-				debugTriangleIndex++;
-			}
-			else
-				debugTriangleIndex = 0;
-		}
 
-		if (GUI.Button (new Rect (0,110,150,100), "Voronoi")) {
-			//createVoronoi();
-
-			System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-			watch.Start();
-			auto ();
-			watch.Stop();
-			double elapsedMS = watch.ElapsedMilliseconds;
-
-			UnityEngine.Debug.Log(elapsedMS);
-
-			createVoronoi();
-		}
-
-		//_Debug.Log(debugTriangleIndex);
-		
-
-	}
 }
 
 

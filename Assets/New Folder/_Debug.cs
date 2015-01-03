@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-public class _Debug 
+public static class _Debug 
 {
 	public static bool allowDebug = true;
 
