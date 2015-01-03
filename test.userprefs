@@ -1,0 +1,37 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\New Folder\Delaunay.cs">
+    <Files>
+      <File FileName="Assets\New Folder\Delaunay.cs" Line="35" Column="5" />
+      <File FileName="Assets\New Folder\Triangle.cs" Line="75" Column="2" />
+      <File FileName="Assets\New Folder\EdgeMaintener.cs" Line="15" Column="96" />
+      <File FileName="Assets\Geometry.cs" Line="12" Column="29" />
+      <File FileName="Assets\New Folder\VoronoiDiagram.cs" Line="27" Column="36" />
+      <File FileName="Assets\New Folder\Main.cs" Line="10" Column="6" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="Assembly-CSharp" expanded="True">
+            <Node name="New Folder" expanded="True">
+              <Node name="Delaunay.cs" selected="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="ClassPad">
+        <State expanded="True" selected="True" />
+      </Pad>
+      <Pad Id="MonoDevelop.Debugger.WatchPad">
+        <State>
+          <Value>t1</Value>
+          <Value>EdgeMaintener.edgeList._items</Value>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
