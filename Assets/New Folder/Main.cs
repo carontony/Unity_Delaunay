@@ -61,7 +61,13 @@ public class Main : MonoBehaviour
 		if (GUI.Button (new Rect ((buttonWidth + spacing) * indexX + spacing, (buttonHeight + spacing) * indexY + spacing, buttonWidth, buttonHeight), "Auto")) {
 			Init ();
 			myDelaunay.delaunayMode = Delaunay.DelaunayMode.auto;
+			System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+			watch.Start();
 			myDelaunay.Auto();
+			watch.Stop();
+			double elapsedMS = watch.ElapsedMilliseconds;
+			
+			UnityEngine.Debug.Log(elapsedMS);
 		}
 		indexX++;
 		if (GUI.Button (new Rect ((buttonWidth + spacing) * indexX + spacing, (buttonHeight + spacing) * indexY + spacing, buttonWidth, buttonHeight), "StepByStepAuto")) {
@@ -91,33 +97,10 @@ public class Main : MonoBehaviour
 			else
 				myDelaunay.debugTriangleIndex = 0;
 		}
-
-		/*if (GUI.Button (new Rect (300,10,150,100), "Show triangle")) {
-			myDelaunay.debugMode = 2;
-			if(myDelaunay.debugTriangleIndex < myDelaunay.triangleList.Count-1)
-			{
-				myDelaunay.debugTriangleIndex++;
-			}
-			else
-				myDelaunay.debugTriangleIndex = 0;
-		}
-		
-		if (GUI.Button (new Rect (0,110,150,100), "Voronoi")) {
-			//createVoronoi();
-			
-			System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-			watch.Start();
-			myDelaunay.auto ();
-			watch.Stop();
-			double elapsedMS = watch.ElapsedMilliseconds;
-			
-			UnityEngine.Debug.Log(elapsedMS);
-			
+		indexX++;
+		if (GUI.Button (new Rect ((buttonWidth + spacing) * indexX + spacing, (buttonHeight + spacing) * indexY + spacing, buttonWidth, buttonHeight), "View Voronoi")) {
 			myDelaunay.createVoronoi();
-		}*/
-		
-		//_Debug.Log(debugTriangleIndex);
-		
+		}		
 		
 	}
 }
