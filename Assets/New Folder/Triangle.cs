@@ -40,9 +40,9 @@ public class Triangle
 	{
 
 		// Dirty parade :)
-		a = edgeList[0].a;
-		b = edgeList[0].b;
-		c = (edgeList[1].a != a && edgeList[1].a != b) ? edgeList[1].a : edgeList[1].b;
+		a = edgeList[1].a;
+		b = edgeList[1].b;
+		c = (edgeList[0].a != a && edgeList[0].a != b) ? edgeList[0].a : edgeList[0].b;
 
 		if(a == b || a == c || b == c)
 		{
@@ -97,6 +97,67 @@ public class Triangle
 		// D: halfAB + t*perpAB
 		// E: halfAC + s*perpAC
 		circumCenter = Geometry.LineLineIntersection(halfAB, perpAB, halfAC, perpAC);
-		circumRadius = Vector2.Distance(circumCenter, a);
+
+		//circumCenter = GetCircumcenter(a,b,c);
+
+		circumRadius = Vector2.Distance(circumCenter, b);
+
+		if(!(Mathf.Approximately(Vector2.Distance(circumCenter, a) , Vector2.Distance(circumCenter, b))))
+		{
+			UnityEngine.Debug.Log(Vector2.Distance(circumCenter, a).ToString());
+			UnityEngine.Debug.Log(Vector2.Distance(circumCenter, b));
+			//throw new Exception("fuck");
+		}
 	}
+
+	public  Vector2 GetCircumcenter(Vector2 a, Vector2 b, Vector2 c)
+	{
+		   // m1 - center of (a,b), the normal goes through it
+		float f1 = (b.x - a.x) / (a.y - b.y);
+		Vector2 m1 = new Vector2((a.x + b.x)/2, (a.y + b.y)/2);
+		float g1 = m1.y - f1*m1.x;
+
+		float f2 = (c.x - b.x) / (b.y - c.y);
+		Vector2 m2 = new Vector2((b.x + c.x)/2, (b.y + c.y)/2);
+		float g2 = m2.y - f2*m2.x;
+
+		   // degenerated cases
+		   // - 3 points on a line
+		if     (f1 == f2)   
+		{
+			return new Vector2(0,0);
+		}
+		   // - a, b have the same height -> slope of normal of |ab| = infinity
+		   else if(a.y == b.y) return new Vector2(m1.x, f2*m1.x + g2);
+		else if(b.y == c.y) return new Vector2(m2.x, f1*m2.x + g1);
+
+		  float x = (g2-g1) / (f1 - f2);
+		return new Vector2(x, f1*x + g1);
+		}
+
+	public  Vector2 Intersect(Vector2 line1V1, Vector2 line1V2, Vector2 line2V1, Vector2 line2V2)
+	{
+		//Line1
+		float A1 = line1V2.y - line1V1.y;
+		float B1 = line1V2.x - line1V1.x;
+		float C1 = A1*line1V1.x + B1*line1V1.y;
+		
+		//Line2
+		float A2 = line2V2.y - line2V1.y;
+		float B2 = line2V2.x - line2V1.x;
+		float C2 = A2 * line2V1.x + B2 * line2V1.y;
+		
+		float det = A1*B2 - A2*B1;
+		if (det == 0)
+		{
+			return new Vector2(0,0) ;//parallel lines
+		}
+		else
+		{
+			float x = (B2*C1 - B1*C2)/det;
+			float y = (A1 * C2 - A2 * C1) / det;
+			return new Vector2(x,y);
+		}
+	}
+
 }

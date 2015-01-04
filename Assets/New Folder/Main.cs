@@ -1,6 +1,13 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
+
+using System.Xml;
+using System.Xml.Serialization;
 
 public class Main : MonoBehaviour
 {
@@ -11,13 +18,42 @@ public class Main : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-
+		//myDelaunay = new Delaunay(20, 20, points);
 	}
 
 	void Init()
 	{
+		string fileName = "savepoints.txt";
+		if (File.Exists(fileName)) File.Delete(fileName);
+
+		StreamWriter	 sr = File.CreateText(fileName);
+
 		points = CreateRandomPoint(100);
+
+
+		/*XmlSerializer xs = new XmlSerializer(typeof(List<Vector2>));
+		using (StreamReader rd = new StreamReader("savepoints.xml"))
+		{
+			points = xs.Deserialize(rd) as List<Vector2>;
+
+		}*/
+
+
 		myDelaunay = new Delaunay(20, 20, points);
+
+
+
+	
+		/*using (StreamWriter wr = new StreamWriter("savepoints.xml"))
+		{
+			xs.Serialize(wr, points);
+		}*/
+
+		for(int i = 0; i < points.Count; i++)
+		{
+			sr.WriteLine ("points.Add(new Vector2("+points[i].x+","+points[i].y+"));\r");
+		}
+		sr.Close();
 	}
 
 	// Update is called once per frame
@@ -30,7 +66,8 @@ public class Main : MonoBehaviour
 
 	void Clear ()
 	{
-		myDelaunay.Clear();
+		if(myDelaunay != null)
+			myDelaunay.Clear();
 		points = CreateRandomPoint(100);
 		myDelaunay = new Delaunay(20, 20, points);
 	}
@@ -78,6 +115,7 @@ public class Main : MonoBehaviour
 		indexX++;
 		if (GUI.Button (new Rect ((buttonWidth + spacing) * indexX + spacing, (buttonHeight + spacing) * indexY + spacing, buttonWidth, buttonHeight), "StepByStep")) {
 			_Debug.allowDebug = true;
+			if(myDelaunay == null) Init();
 			myDelaunay.delaunayMode = Delaunay.DelaunayMode.stepByStep;
 			myDelaunay.StepByStepNext();
 			myDelaunay.debugTriangleIndex = -1;

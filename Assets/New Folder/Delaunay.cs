@@ -12,6 +12,8 @@ struct EdgeToFlip{
 	public Edge e;
 }
 
+// Helped by priority:
+// https://dl.dropboxusercontent.com/u/84854464/totologic/fully_dynamic_constrained_delaunay_triangulation.pdf
 public class Delaunay {
 
 
@@ -48,8 +50,26 @@ public class Delaunay {
 		points.Add(new Vector2(width,0));
 		points.Add(new Vector2(width,height));
 		pointCursor = 4;			
-		
+
+		_points.Reverse();
 		points.AddRange(_points);
+
+	
+		/*Triangle t1 = new Triangle(new Vector2(12.02694f, 3.062051f), new Vector2(7.014543f, 2.657841f), new Vector2(8.496894f, 0.2177948f));
+		t1.circumRadius = 2.536501f;
+		t1.circumCenter.x = 9.547636f;
+		t1.circumCenter.y = 2.526427f;
+
+		Triangle t2 = new Triangle(new Vector2(12.02694f, 3.062051f), new Vector2(7.014543f, 2.657841f), new Vector2(8.197275f, 14.52549f));
+		t2.circumRadius = 6.142125f;
+		t2.circumCenter.x = 9.070292f;
+		t2.circumCenter.y = 8.445724f;
+
+
+		triangleList.Add(t1);
+		  triangleList.Add(t2);
+
+		isLegalEdge(triangleList[1], triangleList[0]);*/
 		
 		triangleList.Add(new Triangle(new Vector2(0,0), new Vector2(0,20), new Vector2(20,20)));
 		triangleList.Add(new Triangle(new Vector2(0,0), new Vector2(20,0), new Vector2(20,20)));
@@ -76,7 +96,7 @@ public class Delaunay {
 		Triangle t;
 
 		// TODO ne pas faire a l'envers
-		for (int i = points.Count-1; i >= 0; i--) 
+		for (int i = points.Count-1; i >= 4; i--) 
 		{
 			// Try to find on witch triangle point is
 			// TODO : Implement a non naive approch here
@@ -117,12 +137,6 @@ public class Delaunay {
 
 	public void StepByStepNext()
 	{
-		
-		//Debug.ClearDeveloperConsole();
-		if(EdgeMaintener.edgeList.Count >=6)
-		{
-			_Debug.Log ("::We have "+EdgeMaintener.edgeList[5].triangleList.Count+" triangles");
-		}
 		gizDebug.Clear();
 
 		if( edgeToFlipList.Count > 0 )
@@ -134,9 +148,6 @@ public class Delaunay {
 				debugShowNext();
 				return;
 			}
-			//_Debug.Log("FLIPIPIPIP");
-
-
 		}
 
 		
@@ -200,12 +211,28 @@ public class Delaunay {
 		}
 	}
 
+	// TODO ne pas tester les 3 points mais uniquement l'opposé de l'edge potentiellment invalid
 	public bool isLegalEdge(Triangle t1, Triangle t2)
 	{
 		bool ret = true;
+		bool ret2 = true; // TODO avirer : juste pour verifier l'algo
 
+		// Test si un des points du triangle t1 est dans le circum de t2
 		if(Geometry.isInCircum(t1.a, t2) || Geometry.isInCircum(t1.b, t2) || Geometry.isInCircum(t1.c, t2))
 		   ret = false;
+
+		// TODO avirer : juste pour verifier l'algo
+		if(Geometry.isInCircum(t2.a, t1) || Geometry.isInCircum(t2.b, t1) || Geometry.isInCircum(t2.c, t1))
+		{
+			ret2 = false;
+		}
+		// TODO avirer : juste pour verifier l'algo
+		if(ret != ret2)
+		{
+			_Debug.Log ("a:"+t1.a+" b:"+t1.b+" c:"+t1.c);
+			_Debug.Log ("a:"+t2.a+" b:"+t2.b+" c:"+t2.c);
+			//throw new Exception("Problème de flotant surement");
+		}
 
 		return ret;
 	}
@@ -282,13 +309,13 @@ public class Delaunay {
 
 		
 		// recupere le vecteur partagé des 2 segments elligible
-		if(!getSharedVector(adjTriangle1.edgeList[t1index1[1]], adjTriangle1.edgeList[t1index1[2]], out sharedTriangle1Vector))
+		if(!getSharedVectorByEdge(adjTriangle1.edgeList[t1index1[1]], adjTriangle1.edgeList[t1index1[2]], out sharedTriangle1Vector))
 		{
 			throw new Exception("pas de edge shared (getSharedVector)");
 		}
 		
 		// recupere le vecteur partagé des 2 segments elligible
-		if(!getSharedVector(adjTriangle2.edgeList[t1index2[1]], adjTriangle2.edgeList[t1index2[2]], out sharedTriangle2Vector))
+		if(!getSharedVectorByEdge(adjTriangle2.edgeList[t1index2[1]], adjTriangle2.edgeList[t1index2[2]], out sharedTriangle2Vector))
 		{
 			throw new Exception("pas de edge shared (getSharedVector)");
 		}
@@ -305,7 +332,7 @@ public class Delaunay {
 
 		
 		// TODO peut etre ne pas faire joujou avec les triangles existants mais plutot tout effacer et tout reconstruire
-		if(getSharedVector(adjTriangle1.edgeList[t1index1[1]], adjTriangle2.edgeList[t1index2[2]], out sharedTriangle1Vector))
+		if(getSharedVectorByEdge(adjTriangle1.edgeList[t1index1[1]], adjTriangle2.edgeList[t1index2[2]], out sharedTriangle1Vector))
 		{
 			EdgeMaintener.removeEdge(adjTriangle1.edgeList[t1index1[2]], adjTriangle1);
 			EdgeMaintener.removeEdge(adjTriangle2.edgeList[t1index2[2]], adjTriangle2);
@@ -342,7 +369,7 @@ public class Delaunay {
 
 	}
 
-
+	// Return if the Triangle is builded with vector V
 	public bool isVectorOfTriangle(Vector2 v, Triangle t)
 	{
 			return (v == t.a || v == t.b || v == t.c);
@@ -363,7 +390,7 @@ public class Delaunay {
 	}
 
 	// recupere le vecteur partagé des 2 segments elligible
-	public bool getSharedVector(Edge a, Edge b, out Vector2 shared){
+	public bool getSharedVectorByEdge(Edge a, Edge b, out Vector2 shared){
 
 		bool ret = true;
 		shared = new Vector2(0,0);
@@ -484,13 +511,13 @@ public class Delaunay {
 		List<int> t1index2 = sortEdgesByShared(adjTriangle2, e);	
 
 		// recupere le vecteur opposé à l'egde invalide du triangle1
-		if(!getSharedVector(adjTriangle1.edgeList[t1index1[1]], adjTriangle1.edgeList[t1index1[2]], out sharedTriangle1Vector))
+		if(!getSharedVectorByEdge(adjTriangle1.edgeList[t1index1[1]], adjTriangle1.edgeList[t1index1[2]], out sharedTriangle1Vector))
 		{
 			throw new Exception("pas de edge shared (getSharedVector)");
 		}
 		
 		// recupere le vecteur opposé à l'egde invalide du triangle2
-		if(!getSharedVector(adjTriangle2.edgeList[t1index2[1]], adjTriangle2.edgeList[t1index2[2]], out sharedTriangle2Vector))
+		if(!getSharedVectorByEdge(adjTriangle2.edgeList[t1index2[1]], adjTriangle2.edgeList[t1index2[2]], out sharedTriangle2Vector))
 		{
 			throw new Exception("pas de edge shared (getSharedVector)");
 		}
@@ -530,7 +557,7 @@ public class Delaunay {
 				// Point deja existant
 				return false;
 			}
-			else if(PointInTriangle(p, triangleList[i].a, triangleList[i].b, triangleList[i].c))
+			else if(Geometry.PointInTriangle(p, triangleList[i].a, triangleList[i].b, triangleList[i].c))
 			{
 				t = triangleList[i];
 				return true;
@@ -538,7 +565,7 @@ public class Delaunay {
 			else if(pointOnTriangle(p, triangleList[i], out e))
 			{
 				t = triangleList[i];
-				return true; // TODO !!!!! remettre a true
+				return false; // TODO !!!!! remettre a true
 			}
 
 		}
@@ -594,23 +621,7 @@ public class Delaunay {
 
 		return false;
 	}
-	public bool PointInTriangle(Vector2 p, Vector2 p0, Vector2 p1, Vector2 p2)
-	{
-		var s = p0.y * p2.x - p0.x * p2.y + (p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y;
-		var t = p0.x * p1.y - p0.y * p1.x + (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y;
-		
-		if ((s < 0) != (t < 0))
-			return false;
-		
-		var A = -p1.y * p2.x + p0.y * (p2.x - p1.x) + p0.x * (p1.y - p2.y) + p1.x * p2.y;
-		if (A < 0.0)
-		{
-			s = -s;
-			t = -t;
-			A = -A;
-		}
-		return s > 0 && t > 0 && (s + t) < A;
-	}
+
 
 	public void createVoronoi()
 	{
