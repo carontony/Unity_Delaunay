@@ -11,13 +11,13 @@ public static class Geometry
 		//return InCircle(p, t.a, t.b, t.c);
 	}
 
-	private static bool InCircle(Vector2 p, Vector2 p1, Vector2 p2, Vector2 p3) 
+	private static bool InCircle(Vector2 p, Vector2 p1, Vector2 p2, Vector2 p3)
 	{ 
 		//Return TRUE if the point (xp,yp) lies inside the circumcircle 
 		//made up by points (x1,y1) (x2,y2) (x3,y3) 
 		//NOTE: A point on the edge is inside the circumcircle 
 
-		if (System.Math.Abs(p1.y - p2.y) < float.Epsilon && System.Math.Abs(p2.y - p3.y) < float.Epsilon) 
+		if (System.Math.Abs(p1.y - p2.y) < float.Epsilon && System.Math.Abs(p2.y - p3.y) < float.Epsilon)
 		{ 
 			//INCIRCUM - F - Points are coincident !! 
 			return false; 
@@ -28,7 +28,7 @@ public static class Geometry
 		float my1, my2; 
 		float xc, yc; 
 		
-		if (System.Math.Abs(p2.y - p1.y) < float.Epsilon) 
+		if (System.Math.Abs(p2.y - p1.y) < float.Epsilon)
 		{ 
 			m2 = -(p3.x - p2.x) / (p3.y - p2.y); 
 			mx2 = (p2.x + p3.x) * 0.5f; 
@@ -36,8 +36,7 @@ public static class Geometry
 			//Calculate CircumCircle center (xc,yc) 
 			xc = (p2.x + p1.x) * 0.5f; 
 			yc = m2 * (xc - mx2) + my2; 
-		} 
-		else if (System.Math.Abs(p3.y - p2.y) < float.Epsilon) 
+		} else if (System.Math.Abs(p3.y - p2.y) < float.Epsilon)
 		{ 
 			m1 = -(p2.x - p1.x) / (p2.y - p1.y); 
 			mx1 = (p1.x + p2.x) * 0.5f; 
@@ -45,8 +44,7 @@ public static class Geometry
 			//Calculate CircumCircle center (xc,yc) 
 			xc = (p3.x + p2.x) * 0.5f; 
 			yc = m1 * (xc - mx1) + my1; 
-		} 
-		else 
+		} else
 		{ 
 			m1 = -(p2.x - p1.x) / (p2.y - p1.y); 
 			m2 = -(p3.x - p2.x) / (p3.y - p2.y); 
@@ -78,7 +76,7 @@ public static class Geometry
 		
 		float sumOfSquares = dX * dX + dY * dY;
 		
-		float distance =  Mathf.Sqrt(sumOfSquares);
+		float distance = Mathf.Sqrt(sumOfSquares);
 		
 		return (radius < distance);
 	}
@@ -96,17 +94,11 @@ public static class Geometry
 		float distance = (p - center).magnitude;
 		//distance = Mathf.Round(distance * 1000f) / 1000f;
 
-		if(Mathf.Approximately(distance, radius)) return false;
+		return distance < (radius - Mathf.Epsilon);
 
-		return (distance < radius-Mathf.Epsilon && distance < radius + Mathf.Epsilon);
+		//if(Mathf.Approximately(distance, radius)) return false;
 
-		//return Mathf.Abs(radius  - distance) < Mathf.Abs(radius) / float.Epsilon;
-
-		//return distance < radius;
-		//return ( (p.x - center.x)^2 + (p.y - center.y)^2 < radius^2 );
-		//float 	D = Mathf.Sqrt((float)Math.Pow(center.x - p.x, 2) + Mathf.Pow(center.y - p.y, 2));
-		//return D < radius;
-
+		//return (distance < radius-Mathf.Epsilon && distance < radius + Mathf.Epsilon);
 	}
 
 
@@ -135,19 +127,19 @@ public static class Geometry
 
 	public static bool PointInTrianglev2(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
 	{
-			// Compute vectors        
+		// Compute vectors        
 		Vector2 v0 = c - a;
 		Vector2 v1 = b - a;
 		Vector2 v2 = p - a;
 			
-			// Compute dot products
+		// Compute dot products
 		float dot00 = Vector2.Dot(v0, v0);
 		float dot01 = Vector2.Dot(v0, v1);
 		float dot02 = Vector2.Dot(v0, v2);
 		float dot11 = Vector2.Dot(v1, v1);
 		float dot12 = Vector2.Dot(v1, v2);
 			
-			// Compute barycentric coordinates
+		// Compute barycentric coordinates
 		float invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
 		float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
 		float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
@@ -156,7 +148,8 @@ public static class Geometry
 		return (u >= 0) && (v >= 0) && (u + v < 1);
 	}
 
-	public static Vector3 LineLineIntersection(Vector3 originD, Vector3 directionD, Vector3 originE, Vector3 directionE) {
+	public static Vector3 LineLineIntersection(Vector3 originD, Vector3 directionD, Vector3 originE, Vector3 directionE)
+	{
 		directionD.Normalize();
 		directionE.Normalize();
 		Vector3 N = Vector3.Cross(directionD, directionE);
@@ -165,13 +158,16 @@ public static class Geometry
 		float absY = Mathf.Abs(N.y);
 		float absZ = Mathf.Abs(N.z);
 		float t;
-		if (absZ > absX && absZ > absY) {
-			t = (SR.x*directionE.y - SR.y*directionE.x)/N.z;
-		} else if (absX > absY) {
-			t = (SR.y*directionE.z - SR.z*directionE.y)/N.x;
-		} else {
-			t = (SR.z*directionE.x - SR.x*directionE.z)/N.y;
+		if (absZ > absX && absZ > absY)
+		{
+			t = (SR.x * directionE.y - SR.y * directionE.x) / N.z;
+		} else if (absX > absY)
+		{
+			t = (SR.y * directionE.z - SR.z * directionE.y) / N.x;
+		} else
+		{
+			t = (SR.z * directionE.x - SR.x * directionE.z) / N.y;
 		}
-		return originD - t*directionD;
+		return originD - t * directionD;
 	}
 }

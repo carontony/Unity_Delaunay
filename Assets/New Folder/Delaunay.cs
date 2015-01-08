@@ -1,37 +1,37 @@
 ﻿// CARON TONY
-
 using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics ;
+using System.Linq;
 
+// TODO 
+/*
+Remove triangleList from Delaunay class
+Add a new finding point method
+Delete triangle not used
 
-struct EdgeToFlip{
-	public Vector2 v;
-	public Edge e;
-}
+*/
 
 // Helped by priority:
 // https://dl.dropboxusercontent.com/u/84854464/totologic/fully_dynamic_constrained_delaunay_triangulation.pdf
-public class Delaunay {
-
-
+public class Delaunay
+{
 	List<Vector2> points = new List<Vector2>();
 	int pointCursor = 0;
+	public Dictionary<Triangle, Triangle> triangleList = new Dictionary<Triangle,Triangle>();
+	public Dictionary<Triangle, Triangle> triangleDebugList = new Dictionary<Triangle,Triangle>();
+	public Dictionary<Edge, Edge> edgeDebugList = new Dictionary<Edge,Edge>();
 
-	public List<Triangle> triangleList = new List<Triangle>();
 	List<Triangle> triangleToAddList = new List<Triangle>();
-
 	List<EdgeToFlip> edgeToFlipList = new List<EdgeToFlip>();
-
 	List<Vector2> gizDebug = new List<Vector2>();
-
 	public int debugMode = 1;
-	public int debugTriangleIndex = 0;
+	public Triangle debugTriangleIndex;
 	public int debugIterate = 0;
 
-	public enum DelaunayMode {
+	public enum DelaunayMode
+	{
 		stepByStep 		= 1,
 		stepByStepAuto 	= 2,
 		auto			= 3,
@@ -45,44 +45,30 @@ public class Delaunay {
 	{
 		EdgeMaintener.edgeList.Clear();
 
-		points.Add(new Vector2(0,0));
-		points.Add(new Vector2(0,height));
-		points.Add(new Vector2(width,0));
-		points.Add(new Vector2(width,height));
+		points.Add(new Vector2(0, 0));
+		points.Add(new Vector2(0, height));
+		points.Add(new Vector2(width, 0));
+		points.Add(new Vector2(width, height));
 		pointCursor = 4;			
 
 		_points.Reverse();
 		points.AddRange(_points);
 
-	
-		/*Triangle t1 = new Triangle(new Vector2(12.02694f, 3.062051f), new Vector2(7.014543f, 2.657841f), new Vector2(8.496894f, 0.2177948f));
-		t1.circumRadius = 2.536501f;
-		t1.circumCenter.x = 9.547636f;
-		t1.circumCenter.y = 2.526427f;
-
-		Triangle t2 = new Triangle(new Vector2(12.02694f, 3.062051f), new Vector2(7.014543f, 2.657841f), new Vector2(8.197275f, 14.52549f));
-		t2.circumRadius = 6.142125f;
-		t2.circumCenter.x = 9.070292f;
-		t2.circumCenter.y = 8.445724f;
-
-
-		triangleList.Add(t1);
-		  triangleList.Add(t2);
-
-		isLegalEdge(triangleList[1], triangleList[0]);*/
+		Triangle t1 = new Triangle(new Vector2(0, 0), new Vector2(0, 20), new Vector2(20, 20));
+		Triangle t2 = new Triangle(new Vector2(0, 0), new Vector2(20, 0), new Vector2(20, 20));
 		
-		triangleList.Add(new Triangle(new Vector2(0,0), new Vector2(0,20), new Vector2(20,20)));
-		triangleList.Add(new Triangle(new Vector2(0,0), new Vector2(20,0), new Vector2(20,20)));
+		triangleList.Add(t1, t1);
+		triangleList.Add(t2, t2);
 	}
-
 
 	public void Clear()
 	{
 
 	}
+
 	public void Update()
 	{
-		if(delaunayMode == DelaunayMode.stepByStepAuto)
+		if (delaunayMode == DelaunayMode.stepByStepAuto)
 		{		
 			StepByStepNext();
 		}
@@ -96,11 +82,11 @@ public class Delaunay {
 		Triangle t;
 
 		// TODO ne pas faire a l'envers
-		for (int i = points.Count-1; i >= 4; i--) 
+		for (int i = points.Count-1; i >= 4; i--)
 		{
 			// Try to find on witch triangle point is
 			// TODO : Implement a non naive approch here
-			if(!getTriangleFromPoint(points[i], out t, out e))
+			if (!getTriangleFromPoint(points [i], out t, out e))
 			{
 				// Point not found or not valid => remove from list
 				points.RemoveAt(i);
@@ -108,27 +94,27 @@ public class Delaunay {
 			}
 
 			// Create the new triangles
-			if(e == null)
-				insertPointIn(points[i], t);
+			if (e == null)
+				insertPointIn(points [i], t);
 			else
-				insertPointOn(points[i], t, e);
+				insertPointOn(points [i], t, e);
 
-
-			for (int j = triangleList.Count-1; j >= 0; j--) 
-			{				
-				if(triangleList[j].toDelete == true)
+			while (edgeToFlipList.Count > 0)
+				for (int j = edgeToFlipList.Count-1; j >= 0; j--)
 				{
-					triangleList[j].removeEdges();
-					triangleList.RemoveAt(j);
+					flipEdge(edgeToFlipList [j].edgeToFlip, edgeToFlipList [j].pointInserted);
+					edgeToFlipList.RemoveAt(j);
 				}
-			}		
-
-			while(edgeToFlipList.Count > 0)
-			for (int j = edgeToFlipList.Count-1; j >= 0; j--) 
+			/*{
+				EdgeToFlip ef = edgeToFlipList[edgeToFlipList.Count-1];
+				edgeToFlipList.RemoveAt(edgeToFlipList.Count-1);
+				flipEdge(ef.e, ef.v);
+			}*/
+			/*for (int j = edgeToFlipList.Count-1; j >= 0; j--) 
 			{
 				flipEdge(edgeToFlipList[j].e, edgeToFlipList[j].v);
 				edgeToFlipList.RemoveAt(j);
-			}
+			}*/
 		}
 
 
@@ -139,11 +125,11 @@ public class Delaunay {
 	{
 		gizDebug.Clear();
 
-		if( edgeToFlipList.Count > 0 )
+		if (edgeToFlipList.Count > 0)
 		{
-			for (int i = edgeToFlipList.Count-1; i >= 0; i--) 
+			for (int i = edgeToFlipList.Count-1; i >= 0; i--)
 			{
-				flipEdge(edgeToFlipList[i].e, edgeToFlipList[i].v);
+				flipEdge(edgeToFlipList [i].edgeToFlip, edgeToFlipList [i].pointInserted);
 				edgeToFlipList.RemoveAt(i);
 				debugShowNext();
 				return;
@@ -151,59 +137,42 @@ public class Delaunay {
 		}
 
 		
-		if(pointCursor != points.Count)
+		if (pointCursor != points.Count)
 		{
-			Vector2 nextPoint = points[pointCursor];
+			Vector2 nextPoint = points [pointCursor];
 			Edge e;
 			Triangle t;
 			
-			if(!getTriangleFromPoint(nextPoint, out t, out e))
+			if (!getTriangleFromPoint(nextPoint, out t, out e))
 			{
 				points.RemoveAt(pointCursor);
 				return;
 			}
 
-			if(e == null)
+			if (e == null)
 				insertPointIn(nextPoint, t);
 			else
 				insertPointOn(nextPoint, t, e);
 			
 			pointCursor++;
 
-			for (int i = triangleList.Count-1; i >= 0; i--) {
-		
-				if(triangleList[i].toDelete == true)
-				{
-					_Debug.Log ("Remove triangle "+i);
-				
-					triangleList[i].removeEdges();
-					triangleList.RemoveAt(i);
-				}
-			}			
+					
 		}
 
 		debugShowNext();
-		
-
-		/*for (int i = edgeToFlipList.Count-1; i >= 0; i--) 
-		{
-			flipEdge(edgeToFlipList[i]);
-		}*/
-		
-
 	}
 
 	public void debugShowNext()
 	{
-		_Debug.Log("find "+edgeToFlipList.Count+" edge(s) to flip");
+		_Debug.Log("find " + edgeToFlipList.Count + " edge(s) to flip");
 		
-		if( edgeToFlipList.Count > 0 )
+		if (edgeToFlipList.Count > 0)
 		{
-			for (int i = edgeToFlipList.Count-1; i >= 0; i--) 
+			for (int i = edgeToFlipList.Count-1; i >= 0; i--)
 			{
 				_Debug.Log("We will Try to flip this edge");
-				gizDebug.Add(edgeToFlipList[i].e.a);
-				gizDebug.Add(edgeToFlipList[i].e.b);
+				gizDebug.Add(edgeToFlipList [i].edgeToFlip.a);
+				gizDebug.Add(edgeToFlipList [i].edgeToFlip.b);
 				
 				return;
 			}		
@@ -211,361 +180,208 @@ public class Delaunay {
 		}
 	}
 
-	// TODO ne pas tester les 3 points mais uniquement l'opposé de l'edge potentiellment invalid
-	public bool isLegalEdge(Triangle t1, Triangle t2)
+
+	public bool isLegalEdge(Triangle t1, Vector2 a)
 	{
-		bool ret = true;
-		bool ret2 = true; // TODO avirer : juste pour verifier l'algo
-
-		// Test si un des points du triangle t1 est dans le circum de t2
-		if(Geometry.isInCircum(t1.a, t2) || Geometry.isInCircum(t1.b, t2) || Geometry.isInCircum(t1.c, t2))
-		   ret = false;
-
-		// TODO avirer : juste pour verifier l'algo
-		if(Geometry.isInCircum(t2.a, t1) || Geometry.isInCircum(t2.b, t1) || Geometry.isInCircum(t2.c, t1))
-		{
-			ret2 = false;
-		}
-		// TODO avirer : juste pour verifier l'algo
-		if(ret != ret2)
-		{
-			_Debug.Log ("a:"+t1.a+" b:"+t1.b+" c:"+t1.c);
-			_Debug.Log ("a:"+t2.a+" b:"+t2.b+" c:"+t2.c);
-			//throw new Exception("Problème de flotant surement");
-		}
-
-		return ret;
+		return !Geometry.isInCircum(a, t1);
 	}
 
 	public void flipEdge(Edge edgeToFlip, Vector2 pointInserted)
 	{
-		debugIterate++;
-		_Debug.Log(debugIterate);
+		Vector2 oppositeVectorT1, oppositeVectorT2;
 
-		Vector2 sharedTriangle1Vector, sharedTriangle2Vector;
+		_Debug.Log(++debugIterate);
 
-		_Debug.Log("This edge has "+edgeToFlip.triangleList.Count+" triangles");
-
-		if(edgeToFlip.triangleList.Count > 2)
-		{
+		if (edgeToFlip.triangleList.Count > 2)
 			throw new Exception("This edge has more than 2 triangles");
-		}
 
-		if(edgeToFlip.triangleList.Count < 2)
+
+		if (edgeToFlip.triangleList.Count < 2)
 		{
 			_Debug.Log("Edge Alone, nothing to do");
 			return; // nothing to do, no adjacent triangle
 		}
 	
-		Triangle adjTriangle1 = edgeToFlip.triangleList[0];
-		Triangle adjTriangle2 = edgeToFlip.triangleList[1];
+		// Recupere les 2 triangles de l'edges
+		Triangle adjTriangle1 = edgeToFlip.triangleList.First().Value;
+		Triangle adjTriangle2 = edgeToFlip.triangleList.Last().Value;
+
+		// Recupère le vecteur opposé à l'edge pour le triangle 1
+		oppositeVectorT1 = adjTriangle1.getOppositeVectorFromEdge(edgeToFlip);
+
+		// Recupère le vecteur opposé à l'edge pour le triangle 2
+		oppositeVectorT2 = adjTriangle2.getOppositeVectorFromEdge(edgeToFlip);
 
 
-		// Test if Delaunay
-		if(isLegalEdge(adjTriangle2, adjTriangle1)){
-			_Debug.Log("Edge is valid");
-		return; // Shared edge is legal
-		}
-
-		_Debug.Log("Edge is invalid, going to flip");
-
-		// Shared always at index 0 // TODO dirty
-		List<int> t1index1 = sortEdgesByShared(adjTriangle1, edgeToFlip);
-		List<int> t1index2 = sortEdgesByShared(adjTriangle2, edgeToFlip);	
-		
-		// Remove the invalid edge from the 2 triangles
-		EdgeMaintener.removeEdge(edgeToFlip, adjTriangle1);
-		EdgeMaintener.removeEdge(edgeToFlip, adjTriangle2);		
-
-		//Triangle triangleContainPointInserted = isVectorTriangle(pointInserted, adjTriangle1) ? adjTriangle1 : adjTriangle2;
-		if(!isVectorOfTriangle(pointInserted, adjTriangle1))
+		// Test if the edge is Delaunay against the opposite point
+		if (adjTriangle1.isVectorOf(pointInserted))
 		{
-			EdgeToFlip a = new EdgeToFlip();
-			a.v = pointInserted;
-			
-			a.e = adjTriangle1.edgeList[t1index1[1]];
-			edgeToFlipList.Add(a);
-			
-			a.e = adjTriangle1.edgeList[t1index1[2]];
-			edgeToFlipList.Add(a);
-		}
-		else if(!isVectorOfTriangle(pointInserted, adjTriangle2))
-		{
-			EdgeToFlip a = new EdgeToFlip();
-			a.v = pointInserted;
-			
-			a.e = adjTriangle2.edgeList[t1index2[1]];
-			edgeToFlipList.Add(a);
-			
-			a.e = adjTriangle2.edgeList[t1index2[2]];
-			edgeToFlipList.Add(a);
-		}
-		else
-		{
-			throw new Exception("oups");
-		}
-
-
-
-		
-		// recupere le vecteur partagé des 2 segments elligible
-		if(!getSharedVectorByEdge(adjTriangle1.edgeList[t1index1[1]], adjTriangle1.edgeList[t1index1[2]], out sharedTriangle1Vector))
-		{
-			throw new Exception("pas de edge shared (getSharedVector)");
-		}
-		
-		// recupere le vecteur partagé des 2 segments elligible
-		if(!getSharedVectorByEdge(adjTriangle2.edgeList[t1index2[1]], adjTriangle2.edgeList[t1index2[2]], out sharedTriangle2Vector))
-		{
-			throw new Exception("pas de edge shared (getSharedVector)");
-		}
-
-		// FlipEdge : Remplace l'edge invalide par le valide
-		adjTriangle1.edgeList[t1index1[0]] =  EdgeMaintener.createEdge(sharedTriangle1Vector, sharedTriangle2Vector, adjTriangle1);
-		adjTriangle2.edgeList[t1index2[0]] =  EdgeMaintener.createEdge(sharedTriangle1Vector, sharedTriangle2Vector, adjTriangle2);
-
-		if(adjTriangle1.edgeList[t1index1[0]] != adjTriangle2.edgeList[t1index2[0]])
-		{
-			throw new Exception("AIE");
-		}
-
-
-		
-		// TODO peut etre ne pas faire joujou avec les triangles existants mais plutot tout effacer et tout reconstruire
-		if(getSharedVectorByEdge(adjTriangle1.edgeList[t1index1[1]], adjTriangle2.edgeList[t1index2[2]], out sharedTriangle1Vector))
-		{
-			EdgeMaintener.removeEdge(adjTriangle1.edgeList[t1index1[2]], adjTriangle1);
-			EdgeMaintener.removeEdge(adjTriangle2.edgeList[t1index2[2]], adjTriangle2);
-
-			Edge nextEdgeToFlip1 = adjTriangle1.edgeList[t1index1[1]];
-			Edge nextEdgeToFlip2 = adjTriangle1.edgeList[t1index1[2]];	
-
-			Edge saveT1_2 = adjTriangle1.edgeList[t1index1[2]];
-			//adjTriangle1.edgeList[t1index1[2]] = adjTriangle2.edgeList[t1index2[2]];
-			//adjTriangle2.edgeList[t1index2[2]] = saveT1_2;
-
-			adjTriangle1.edgeList[t1index1[2]] = EdgeMaintener.createEdge(adjTriangle2.edgeList[t1index2[2]].a, adjTriangle2.edgeList[t1index2[2]].b, adjTriangle1);
-			adjTriangle2.edgeList[t1index2[2]] = EdgeMaintener.createEdge(saveT1_2.a, saveT1_2.b, adjTriangle2);
-			
-			adjTriangle1.edgesToVectors();
-			adjTriangle2.edgesToVectors();
-
-		}
-		else
-		{
-			EdgeMaintener.removeEdge(adjTriangle1.edgeList[t1index1[2]], adjTriangle1);
-			EdgeMaintener.removeEdge(adjTriangle2.edgeList[t1index2[1]], adjTriangle2);
-
-			Edge saveT1_2 = adjTriangle1.edgeList[t1index1[2]];
-			//adjTriangle1.edgeList[t1index1[2]] = adjTriangle2.edgeList[t1index2[1]];
-			//adjTriangle2.edgeList[t1index2[1]] = saveT1_2;
-
-			adjTriangle1.edgeList[t1index1[2]] = EdgeMaintener.createEdge(adjTriangle2.edgeList[t1index2[1]].a, adjTriangle2.edgeList[t1index2[1]].b, adjTriangle1);
-			adjTriangle2.edgeList[t1index2[1]] = EdgeMaintener.createEdge(saveT1_2.a, saveT1_2.b, adjTriangle2);;
-
-			adjTriangle1.edgesToVectors();
-			adjTriangle2.edgesToVectors();
-		}
-
-	}
-
-	// Return if the Triangle is builded with vector V
-	public bool isVectorOfTriangle(Vector2 v, Triangle t)
-	{
-			return (v == t.a || v == t.b || v == t.c);
-	}
-
-	public bool getTriangleEdgeFromVectors(Triangle t, Vector2 a, Vector2 b, out Edge e)
-	{
-		e = null;
-		for(int i = 0; i < t.edgeList.Count; i++)
-		{
-			if((t.edgeList[i].a == a && t.edgeList[i].b == b) || (t.edgeList[i].a == b && t.edgeList[i].b == a))
+			if (isLegalEdge(adjTriangle1, oppositeVectorT2))
 			{
-				e = t.edgeList[i];
-				return true;
+				_Debug.Log("Edge is valid1");
+				return; // Shared edge is legal
+			}
+		} else if (adjTriangle2.isVectorOf(pointInserted))
+		{
+			if (isLegalEdge(adjTriangle2, oppositeVectorT1))
+			{
+				_Debug.Log("Edge is valid2");
+				return; // Shared edge is legal
+			}
+		} else
+			throw new Exception("No inserted point in the two triangles");
+					
+		
+		_Debug.Log("Edge is invalid, going to flip");
+			
+		// Create the two new triangles
+		Triangle t1 = new Triangle(edgeToFlip.a, oppositeVectorT1, oppositeVectorT2);
+		Triangle t2 = new Triangle(edgeToFlip.b, oppositeVectorT1, oppositeVectorT2);
+
+		triangleList.Add(t1, t1);
+		triangleList.Add(t2, t2);
+
+		List<Edge> adjEdge;
+		adjEdge = adjTriangle1.isVectorOf(pointInserted) ? adjTriangle2.getAdjacentEdgesFromEdge(edgeToFlip) : adjTriangle1.getAdjacentEdgesFromEdge(edgeToFlip);
+
+		foreach (Edge e in adjEdge)
+		{
+			edgeToFlipList.Add(new EdgeToFlip(e, pointInserted));
+		}
+				
+		adjTriangle1.removeEdges();
+		triangleList.Remove(adjTriangle1);
+
+		adjTriangle2.removeEdges();
+		triangleList.Remove(adjTriangle2);
+	}
+
+
+
+	public Edge getTriangleEdgeFromVectors(Triangle t, Vector2 a, Vector2 b)
+	{
+		Edge e = null;
+
+		for (int i = 0; i < t.edgeList.Count; i++)
+		{
+			if ((t.edgeList [i].a == a && t.edgeList [i].b == b) || (t.edgeList [i].a == b && t.edgeList [i].b == a))
+			{
+				e = t.edgeList [i];
+				break;
 			}		
 		}
-		return false;
-	}
 
-	// recupere le vecteur partagé des 2 segments elligible
-	public bool getSharedVectorByEdge(Edge a, Edge b, out Vector2 shared){
-
-		bool ret = true;
-		shared = new Vector2(0,0);
-
-		if(a.a == b.a)
-			shared =  a.a;
-		else if(a.a == b.b)
-			shared = a.a;
-		else if(a.b == b.a)
-			shared =  a.b;
-		else if(a.b == b.b)
-			shared = a.b;
-		else
-			ret = false;
-
-		return ret;
-	}
-
-	// Illegal Always first
-	public List<int> sortEdgesByShared(Triangle t, Edge e)
-	{		
-		List<int> indexList = new List<int>();
-		if(t.edgeList[0] == e)
+		if (e == null)
 		{
-			indexList.Add(0);
-			indexList.Add(1);
-			indexList.Add(2);
-		}
-		else if(t.edgeList[1] == e)
-		{
-			indexList.Add(1);
-			indexList.Add(0);
-			indexList.Add(2);
-		}
-		else if(t.edgeList[2] == e)
-		{
-			indexList.Add(2);
-			indexList.Add(1);
-			indexList.Add(0);
-		}
-		else
-			throw new Exception("pas de edge shared (sortEdgesByShared)");
-		
-		return indexList;
-	}
-
-	// Illegal Always first
-	public List<Edge> sortIllegalEdge(Triangle t, Edge e)
-	{
-		List<Edge> edgeList = new List<Edge>();
-
-		if(t.edgeAb == e)
-		{
-			edgeList.Add(t.edgeAb);
-			edgeList.Add(t.edgeCa);
-			edgeList.Add(t.edgeBc);
-		}
-		else if(t.edgeCa == e)
-		{
-			edgeList.Add(t.edgeCa);
-			edgeList.Add(t.edgeAb);
-			edgeList.Add(t.edgeBc);
-		}
-		else if(t.edgeBc == e)
-		{
-			edgeList.Add(t.edgeBc);
-			edgeList.Add(t.edgeAb);
-			edgeList.Add(t.edgeCa);
+			throw new Exception("getTriangleEdgeFromVectors not found");
 		}
 
-		return edgeList;
+		return e;
 	}
 
 
-	void showInvalid()
-	{
-	}
 
-	
+
 
 
 	private void insertPointIn(Vector2 p, Triangle t)
 	{
-		t.toDelete = true;
 
-		triangleList.Add(new Triangle(p, t.a, t.c));
-		triangleList.Add(new Triangle(p, t.c, t.b));
-		triangleList.Add(new Triangle(p, t.a, t.b));
+		Triangle t1 = new Triangle(p, t.a, t.c);
+		Triangle t2 = new Triangle(p, t.c, t.b);
+		Triangle t3 = new Triangle(p, t.a, t.b);
 
-		EdgeToFlip a = new EdgeToFlip();
-		a.v = p;
-		
-		a.e = t.edgeList[0];
-		edgeToFlipList.Add(a);
-		
-		a.e = t.edgeList[1];
-		edgeToFlipList.Add(a);
-		
-		a.e = t.edgeList[2];
-		edgeToFlipList.Add(a);
+		triangleList.Add(t1, t1);
+		triangleList.Add(t2, t2);
+		triangleList.Add(t3, t3);
+
+		edgeToFlipList.Add(new EdgeToFlip(t.edgeList [0], p));
+		edgeToFlipList.Add(new EdgeToFlip(t.edgeList [1], p));
+		edgeToFlipList.Add(new EdgeToFlip(t.edgeList [2], p));
+	
+
+
+		t.removeEdges();
+		triangleList.Remove(t);
+
+		for (int f = 0; f < EdgeMaintener.edgeList.Count; f++)
+		{
+			if (EdgeMaintener.edgeList [f].triangleList.Count > 2)
+				throw new Exception("ARGGGGGGGGGGGGx");
+		}
 
 	}
 
 	// In this case, we need to create 2 triangles in the 2 triangles shared by the edge
 	private void insertPointOn(Vector2 p, Triangle t, Edge e)
 	{
-		Vector2 sharedTriangle1Vector, sharedTriangle2Vector;
+		Vector2 oppositeVectorT1, oppositeVectorT2;
 
-		Triangle adjTriangle1 = e.triangleList[0];
-		Triangle adjTriangle2 = e.triangleList[1];
-
-		// Need to be deleted
-		adjTriangle1.toDelete = true;
-		adjTriangle2.toDelete = true;
-
-		// Shared always at index 0 // TODO dirty
-		List<int> t1index1 = sortEdgesByShared(adjTriangle1, e);
-		List<int> t1index2 = sortEdgesByShared(adjTriangle2, e);	
+		Triangle adjTriangle1 = e.triangleList.First().Value;
+		Triangle adjTriangle2 = e.triangleList.Last().Value;
 
 		// recupere le vecteur opposé à l'egde invalide du triangle1
-		if(!getSharedVectorByEdge(adjTriangle1.edgeList[t1index1[1]], adjTriangle1.edgeList[t1index1[2]], out sharedTriangle1Vector))
+		oppositeVectorT1 = adjTriangle1.getOppositeVectorFromEdge(e);
+		oppositeVectorT2 = adjTriangle2.getOppositeVectorFromEdge(e);
+
+
+		Triangle t1 = new Triangle(p, e.a, oppositeVectorT1);
+		Triangle t2 = new Triangle(p, e.a, oppositeVectorT2);
+		Triangle t3 = new Triangle(p, e.b, oppositeVectorT1);
+		Triangle t4 = new Triangle(p, e.b, oppositeVectorT2);
+
+		triangleList.Add(t1, t1);
+		triangleList.Add(t2, t2);
+		triangleList.Add(t3, t3);
+		triangleList.Add(t4, t4);
+
+		List<Edge> adjEdge;
+		adjEdge = adjTriangle1.getAdjacentEdgesFromEdge(e);
+		
+		foreach (Edge ed in adjEdge)
 		{
-			throw new Exception("pas de edge shared (getSharedVector)");
+			edgeToFlipList.Add(new EdgeToFlip(ed, p));
 		}
+
+		adjEdge = adjTriangle2.getAdjacentEdgesFromEdge(e);
 		
-		// recupere le vecteur opposé à l'egde invalide du triangle2
-		if(!getSharedVectorByEdge(adjTriangle2.edgeList[t1index2[1]], adjTriangle2.edgeList[t1index2[2]], out sharedTriangle2Vector))
+		foreach (Edge ed in adjEdge)
 		{
-			throw new Exception("pas de edge shared (getSharedVector)");
+			edgeToFlipList.Add(new EdgeToFlip(ed, p));
 		}
-		
-		triangleList.Add(new Triangle(p, adjTriangle1.edgeList[t1index1[0]].a, sharedTriangle1Vector));
-		triangleList.Add(new Triangle(p, adjTriangle1.edgeList[t1index1[0]].a, sharedTriangle2Vector));
-		triangleList.Add(new Triangle(p, adjTriangle1.edgeList[t1index1[0]].b, sharedTriangle1Vector));
-		triangleList.Add(new Triangle(p, adjTriangle1.edgeList[t1index1[0]].b, sharedTriangle2Vector));
 
-		EdgeToFlip a = new EdgeToFlip();
-		a.v = p;
-		
-		a.e = adjTriangle1.edgeList[t1index1[1]];
-		edgeToFlipList.Add(a);
+		adjTriangle1.removeEdges();
+		triangleList.Remove(adjTriangle1);
 
-		a.e = adjTriangle1.edgeList[t1index1[2]];
-		edgeToFlipList.Add(a);
+		adjTriangle2.removeEdges();
+		triangleList.Remove(adjTriangle2);
 
-		a.e = adjTriangle2.edgeList[t1index2[1]];
-		edgeToFlipList.Add(a);
-
-		a.e = adjTriangle2.edgeList[t1index2[2]];
-		edgeToFlipList.Add(a);
+		for (int f = 0; f < EdgeMaintener.edgeList.Count; f++)
+		{
+			if (EdgeMaintener.edgeList [f].triangleList.Count > 2)
+				throw new Exception("ARGGGGGGGGGGGG");
+		}
 	}
-
-
-
 
 	private bool getTriangleFromPoint(Vector2 p, out Triangle t, out Edge e)
 	{
 		e = null;
 		t = null;
-		for (int i = 0; i < triangleList.Count; i++) {
 
-			if(p == triangleList[i].a || p == triangleList[i].b || p == triangleList[i].c)
+		foreach (Triangle tr in triangleList.Values)
+		{
+			if (p == tr.a || p == tr.b || p == tr.c)
 			{
 				// Point deja existant
 				return false;
-			}
-			else if(Geometry.PointInTriangle(p, triangleList[i].a, triangleList[i].b, triangleList[i].c))
+			} else if (Geometry.PointInTriangle(p, tr.a, tr.b, tr.c))
 			{
-				t = triangleList[i];
+				t = tr;
 				return true;
-			}
-			else if(pointOnTriangle(p, triangleList[i], out e))
+			} else if (pointOnTriangle(p, tr, out e))
 			{
-				t = triangleList[i];
-				return false; // TODO !!!!! remettre a true
+				t = tr;
+				return true; // TODO !!!!! remettre a true
 			}
 
 		}
@@ -580,151 +396,238 @@ public class Delaunay {
 
 		e = null;
 
-		direction 	= ( t.b - t.a ).normalized;
-		distance 	= ( p - t.a ).magnitude;
-		newPoint 	= t.a + (direction * distance);
+		direction = (t.b - t.a).normalized;
+		distance = (p - t.a).magnitude;
+		newPoint = t.a + (direction * distance);
 
-		if(newPoint == p && distance <= ( t.b - t.a ).magnitude )
+		if (newPoint == p && distance <= (t.b - t.a).magnitude)
 		{
-			if(!getTriangleEdgeFromVectors(t, t.a, t.b, out e))
-			{
-				throw new Exception("getTriangleEdgeFromVectors not found");
-			}
+			e = getTriangleEdgeFromVectors(t, t.a, t.b);
 			return true;
 		}
 
-		direction 	= ( t.c - t.b ).normalized;
-		distance 	= ( p - t.b ).magnitude;
-		newPoint 	= t.b + (direction * distance);
+		direction = (t.c - t.b).normalized;
+		distance = (p - t.b).magnitude;
+		newPoint = t.b + (direction * distance);
 
-		if(newPoint == p && distance <= ( t.c - t.b ).magnitude )
+		if (newPoint == p && distance <= (t.c - t.b).magnitude)
 		{
-			if(!getTriangleEdgeFromVectors(t, t.b, t.c, out e))
-			{
-				throw new Exception("getTriangleEdgeFromVectors not found");
-			}
+			e = getTriangleEdgeFromVectors(t, t.b, t.c);
 			return true;
 		}
 
-		direction 	= ( t.c - t.a ).normalized;
-		distance 	= ( p - t.a ).magnitude;
-		newPoint 	= t.a + (direction * distance);
+		direction = (t.c - t.a).normalized;
+		distance = (p - t.a).magnitude;
+		newPoint = t.a + (direction * distance);
 		
-		if(newPoint == p && distance <= ( t.c - t.a ).magnitude )
+		if (newPoint == p && distance <= (t.c - t.a).magnitude)
 		{
-			if(!getTriangleEdgeFromVectors(t, t.a, t.c, out e))
-			{
-				throw new Exception("getTriangleEdgeFromVectors not found");
-			}
+			e = getTriangleEdgeFromVectors(t, t.a, t.c);
 			return true;
 		}
 
 		return false;
 	}
 
+	public void toto(Edge e, float? _angle)//,Poly a)
+	{
+		if (edgeDebugList.ContainsKey(e))
+			return;
+		edgeDebugList.Add(e, e);
+
+		Triangle adjTriangle1 = e.triangleList.Count > 0 ? e.triangleList.ElementAt(0).Value : null;
+
+		List<Edge> edgeList = adjTriangle1.getAdjacentEdgesFromEdge(e);
+
+		// Nous avons 2 candidat
+		for (int i = 0; i < edgeList.Count; i++)
+		{
+
+		}
+
+		
+		Triangle adjTriangle2 = e.triangleList.Count > 1 ? e.triangleList.ElementAt(1).Value : null;
+
+
+
+		float angle = Mathf.DeltaAngle(Mathf.Atan2(adjTriangle1.circumCenter.y, adjTriangle1.circumCenter.x) * Mathf.Rad2Deg,
+		                               Mathf.Atan2(adjTriangle2.circumCenter.y, adjTriangle2.circumCenter.x) * Mathf.Rad2Deg);
+
+		if (_angle == null || angle <= _angle)
+		{
+			Debug.DrawLine(adjTriangle1.circumCenter, adjTriangle2.circumCenter, Color.green, 10);
+		}
+		
+		
+		// Test des 3 edges
+		for (int i = 0; i < adjTriangle2.edgeList.Count; i++)
+		{
+			toto(adjTriangle2.edgeList [i], angle);
+		}
+	}
+
+	public void createRegion(Vector2 p, Triangle firstTriangle, Triangle t, Edge previousEdge)
+	{
+		//List 
+		Edge e = t.edgeList [0].ContainVector(p) && t.edgeList [0] != previousEdge ? t.edgeList [0] : (t.edgeList [1].ContainVector(p) && t.edgeList [1] != previousEdge ? t.edgeList [1] : t.edgeList [2]);
+
+		Triangle adjTriangle1 = e.triangleList.ElementAt(0).Value;
+		Triangle adjTriangle2 = e.triangleList.ElementAt(1).Value;
+
+		Triangle nextTriangle = adjTriangle1 == t ? adjTriangle2 : adjTriangle1;
+
+		Debug.DrawLine(t.circumCenter, nextTriangle.circumCenter, Color.green, 20);
+
+		if (nextTriangle != firstTriangle)
+			createRegion(p, firstTriangle, nextTriangle, e);
+	}
 
 	public void createVoronoi()
 	{
-		for(int i = 0; i < triangleList.Count; i++)
+		for (int i = 4; i<points.Count; i++)
 		{
-			_createVoronoi(triangleList[i]);
+			// TODO Refactor
+			// Find one Triange that contain the point
+			foreach (Triangle t in triangleList.Values)
+			{
+				if (t.a == points [i] || t.b == points [i] || t.c == points [i])
+				{
+					createRegion(points [i], t, t, null);
+				}
+			}
+		}
+
+	}
+
+
+
+	public void __createVoronoi()
+	{
+		foreach (Triangle t in triangleList.Values)
+		{
+			_createVoronoi(t);
 			return;
 		}
 	}
 
 	public void _createVoronoi(Triangle t)
 	{
-		for(int i = 0; i < triangleList.Count; i++)
+		foreach (Triangle tr in triangleList.Values)
 		{
-			for(int j = 0; j < triangleList[i].edgeList.Count; j++)
+			for (int j = 0; j < tr.edgeList.Count; j++)
 			{
-				for(int k = 0; k < triangleList[i].edgeList[j].triangleList.Count; k++)
+				for (int k = 0; k < tr.edgeList[j].triangleList.Count; k++)
 				{
-					UnityEngine.Debug.DrawLine(triangleList[i].circumCenter,triangleList[i].edgeList[j].triangleList[k].circumCenter, Color.yellow, 4);
+
+					UnityEngine.Debug.DrawLine(tr.circumCenter, tr.edgeList [j].triangleList.ElementAt(k).Value.circumCenter, Color.yellow, 4);
 				}
 			}
 		}
 	}
 
-	/*public void __createVoronoi(Triangle t)
+	public void OnDrawGizmos()
 	{
-		for(int i = 0; i < t.edgeList.Count; i++)
+		if (delaunayMode == DelaunayMode.auto || delaunayMode == DelaunayMode.stepByStep || delaunayMode == DelaunayMode.stepByStepAuto)
 		{
-			for(int j = 0; j < t.edgeList[i].triangleList.Count; j++)
+			Vector2 oppositeVectorT1, oppositeVectorT2;
+
+			for (int i = 0; i<EdgeMaintener.edgeList.Count; i++)
 			{
-				if(t.edgeList[i].triangleList[j] != t)
+				Edge e = EdgeMaintener.edgeList [i];
+
+				Triangle adjTriangle1 = e.triangleList.Count > 0 ? e.triangleList.ElementAt(0).Value : null;
+				Triangle adjTriangle2 = e.triangleList.Count > 1 ? e.triangleList.ElementAt(1).Value : null;
+
+				if (adjTriangle1 != null)
 				{
-					//Gizmos.color = Color.yellow;
-					//Gizmos.DrawLine(t.circumCenter, t.edgeList[i].triangleList[j].circumCenter);
-					Drawing.DrawLine(t.circumCenter, t.edgeList[i].triangleList[j].circumCenter, Color.yellow, 4);
-
-					_createVoronoi(t.edgeList[i].triangleList[j]);
-				}
-			}
-		}
-	}*/
-	
-
-	public void OnDrawGizmos() {
-
-
-
-		if(delaunayMode == DelaunayMode.auto || delaunayMode == DelaunayMode.stepByStep || delaunayMode == DelaunayMode.stepByStepAuto)
-		{
-			if(triangleList.Count > 0)
-			{
-				for (int i = 0; i < triangleList.Count; i++) {
-					Gizmos.color = triangleList[i].color;
-					
-					Gizmos.DrawLine(triangleList[i].edgeList[0].a, triangleList[i].edgeList[0].b);
-					Gizmos.DrawLine(triangleList[i].edgeList[1].a, triangleList[i].edgeList[1].b);
-					Gizmos.DrawLine(triangleList[i].edgeList[2].a, triangleList[i].edgeList[2].b);
-					
-					Gizmos.color = Color.green;
-					//Gizmos.DrawWireSphere(triangleList[i].circumCenter, triangleList[i].circumRadius);
-
-					for(int j = 0; j < pointCursor; j++)
+					// Don't redraw a triangle
+					if (!triangleDebugList.ContainsKey(adjTriangle1))
 					{
-						if(Geometry.isInCircum(points[j], triangleList[i]))
+						triangleDebugList.Add(adjTriangle1, adjTriangle1);
+						
+						Gizmos.color = Color.grey;//adjTriangle1.color;
+						Gizmos.DrawLine(adjTriangle1.edgeList [0].a, adjTriangle1.edgeList [0].b);
+						Gizmos.DrawLine(adjTriangle1.edgeList [1].a, adjTriangle1.edgeList [1].b);
+						Gizmos.DrawLine(adjTriangle1.edgeList [2].a, adjTriangle1.edgeList [2].b);
+					}
+
+					if (adjTriangle2 != null)
+					{
+						oppositeVectorT2 = adjTriangle2.getOppositeVectorFromEdge(e);
+
+						// Show a red sphere if the edge is invalid
+						if (Geometry.isInCircum(oppositeVectorT2, adjTriangle1))
 						{
 							Gizmos.color = Color.red;
-							Gizmos.DrawWireSphere(triangleList[i].circumCenter, triangleList[i].circumRadius);
+							Gizmos.DrawWireSphere(adjTriangle1.circumCenter, adjTriangle1.circumRadius);
+							Gizmos.DrawSphere(oppositeVectorT2, 0.5f);
 
+							Gizmos.DrawSphere(e.a, 0.2f);
+							Gizmos.DrawSphere(e.b, 0.2f);
+						}
+					}
+				}
+
+				if (adjTriangle2 != null)
+				{
+					// Don't redraw a triangle
+					if (!triangleDebugList.ContainsKey(adjTriangle2))
+					{
+						triangleDebugList.Add(adjTriangle2, adjTriangle2);
+						
+						Gizmos.color = Color.grey;//adjTriangle2.color;
+						Gizmos.DrawLine(adjTriangle2.edgeList [0].a, adjTriangle2.edgeList [0].b);
+						Gizmos.DrawLine(adjTriangle2.edgeList [1].a, adjTriangle2.edgeList [1].b);
+						Gizmos.DrawLine(adjTriangle2.edgeList [2].a, adjTriangle2.edgeList [2].b);
+					}
+					
+					if (adjTriangle1 != null) // Can't be null
+					{
+						oppositeVectorT1 = adjTriangle1.getOppositeVectorFromEdge(e);
+						
+						// Show a red sphere if the edge is invalid
+						if (Geometry.isInCircum(oppositeVectorT1, adjTriangle2))
+						{
+							Gizmos.color = Color.red;
+							Gizmos.DrawWireSphere(adjTriangle2.circumCenter, adjTriangle2.circumRadius);
+							Gizmos.DrawSphere(oppositeVectorT1, 0.5f);
+							
+							Gizmos.DrawSphere(e.a, 0.2f);
+							Gizmos.DrawSphere(e.b, 0.2f);
 						}
 					}
 				}
 			}
-			
-			if(pointCursor > 0)
+			if (pointCursor > 0)
 			{
 				Gizmos.color = Color.blue;
-				for (int i = 0; i < pointCursor; i++) {
-					Gizmos.DrawSphere(points[i], 0.2f);
-				}
+				Gizmos.DrawSphere(points [pointCursor - 1], 0.2f);
 			}
 			
-			if(gizDebug.Count > 0)
+			if (gizDebug.Count > 0)
 			{
 				Gizmos.color = Color.white;
-				Gizmos.DrawLine(gizDebug[0], gizDebug[1]);
+				Gizmos.DrawLine(gizDebug [0], gizDebug [1]);
 			}
 
-		}
+			triangleDebugList.Clear();
 
-		else if(delaunayMode == DelaunayMode.showTriangle)
+
+		} else if (delaunayMode == DelaunayMode.showTriangle)
 		{
-			for (int i = 0; i < triangleList.Count; i++) {
+			foreach (Triangle t in triangleList.Values)
+			{
 				Gizmos.color = Color.grey;
 
-				Gizmos.DrawLine(triangleList[i].edgeList[0].a, triangleList[i].edgeList[0].b);
-				Gizmos.DrawLine(triangleList[i].edgeList[1].a, triangleList[i].edgeList[1].b);
-				Gizmos.DrawLine(triangleList[i].edgeList[2].a, triangleList[i].edgeList[2].b);
+				Gizmos.DrawLine(t.edgeList [0].a, t.edgeList [0].b);
+				Gizmos.DrawLine(t.edgeList [1].a, t.edgeList [1].b);
+				Gizmos.DrawLine(t.edgeList [2].a, t.edgeList [2].b);
 				
 				Gizmos.color = Color.green;
 				//Gizmos.DrawWireSphere(triangleList[i].circumCenter, triangleList[i].circumRadius);
 			}
 
-			Gizmos.color = triangleList[debugTriangleIndex].color;
+			/*Gizmos.color = triangleList[debugTriangleIndex].color;
 			Gizmos.color = Color.green;
 				
 			Gizmos.DrawLine(triangleList[debugTriangleIndex].edgeList[0].a, triangleList[debugTriangleIndex].edgeList[0].b);
@@ -750,7 +653,7 @@ public class Delaunay {
 				}
 			}
 
-			Gizmos.DrawWireSphere(triangleList[debugTriangleIndex].circumCenter, triangleList[debugTriangleIndex].circumRadius);
+			Gizmos.DrawWireSphere(triangleList[debugTriangleIndex].circumCenter, triangleList[debugTriangleIndex].circumRadius);*/
 
 		}
 
