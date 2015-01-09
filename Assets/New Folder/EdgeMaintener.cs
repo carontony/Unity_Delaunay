@@ -23,10 +23,10 @@ public static class EdgeMaintener
 				{
 					return edgeList [i];
 				}
-
+				
 				
 				edgeList [i].triangleList.Add(t, t);
-
+				
 				if (edgeList [i].triangleList.Count == 4)
 				{
 					UnityEngine.Debug.LogWarning("Triangle 4");
@@ -50,22 +50,21 @@ public static class EdgeMaintener
 		// TODO remove from list if empty
 		
 		//--
-
+		
 		if (edge.triangleList.ContainsKey(t))
 			edge.triangleList.Remove(t);
 		else
 			throw new Exception("Problème de flotant surement");
-
-		// BUG inverse la liste avant de delete :)
-		for (int i = 0; i < EdgeMaintener.edgeList.Count; i++)
+		
+		for (int i = EdgeMaintener.edgeList.Count-1; i >= 4; i--)
 		{
 			if (EdgeMaintener.edgeList [i].triangleList.Count == 0)
 			{
 				EdgeMaintener.edgeList.RemoveAt(i);
 			}
 		}
-
-
+		
+		
 		return false;
 		
 	}
@@ -74,10 +73,10 @@ public class Edge
 {
 	public Vector2 a;
 	public Vector2 b;
-
+	
 	// A key contain always the opposite triangle as value
 	public Dictionary<Triangle, Triangle> triangleList = new Dictionary<Triangle,Triangle>();
-
+	
 	public bool ContainVector(Vector2 v)
 	{
 		return (v == a || v == b);

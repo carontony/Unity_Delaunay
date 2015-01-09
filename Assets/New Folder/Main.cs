@@ -13,50 +13,59 @@ public class Main : MonoBehaviour
 {
 	Delaunay myDelaunay;
 	List<Vector2> points = new List<Vector2>();
-
-
-
+	List<Poly> region = new List<Poly>();
+	
+	
+	
 	// Use this for initialization
 	void Start()
 	{
-		//myDelaunay = new Delaunay(20, 20, points);
+		points = CreateRandomPoint(130);
+		myDelaunay = new Delaunay(20, 20, points);
+		myDelaunay.Auto();
+		region=myDelaunay.createVoronoi();
+		
+		foreach(Poly poly in region)
+		{
+		}
 	}
-
+	
 	void Init()
 	{
 		string fileName = "savepoints.txt";
 		if (File.Exists(fileName))
 			File.Delete(fileName);
-
+		
 		StreamWriter sr = File.CreateText(fileName);
-
+		
 		points = CreateRandomPoint(130);
 		
 		XmlSerializer xs = new XmlSerializer(typeof(List<Vector2>));
 		using (StreamReader rd = new StreamReader("savepoints.xml"))
 		{
 			points = xs.Deserialize(rd) as List<Vector2>;
-
+			
 		}
-
-
+		
+		
 		myDelaunay = new Delaunay(20, 20, points);
-
-
-
-	
+		
+		
+		
+		
+		
 		/*using (StreamWriter wr = new StreamWriter("savepoints.xml"))
 		{
 			xs.Serialize(wr, points);
 		}*/
-
+		
 		for (int i = 0; i < points.Count; i++)
 		{
 			sr.WriteLine("points.Add(new Vector2(" + points [i].x + "," + points [i].y + "));\r");
 		}
 		sr.Close();
 	}
-
+	
 	// Update is called once per frame
 	void Update()
 	{
@@ -64,7 +73,7 @@ public class Main : MonoBehaviour
 		if (myDelaunay != null)
 			myDelaunay.Update();
 	}
-
+	
 	void Clear()
 	{
 		if (myDelaunay != null)
@@ -72,7 +81,7 @@ public class Main : MonoBehaviour
 		points = CreateRandomPoint(100);
 		myDelaunay = new Delaunay(20, 20, points);
 	}
-
+	
 	private List<Vector2> CreateRandomPoint(int polygonNumber)
 	{
 		List<Vector2> points = new List<Vector2>();
@@ -83,23 +92,23 @@ public class Main : MonoBehaviour
 		
 		return points;
 	}
-
+	
 	void OnDrawGizmos()
 	{
 		// Needed for showing Gizmo
 		if (myDelaunay != null)
 			myDelaunay.OnDrawGizmos();
 	}
-
+	
 	void OnGUI()
 	{
-
+		
 		int spacing = 10;
 		int buttonHeight = 40;
 		int buttonWidth = 120;
 		int indexX = 0;
 		int indexY = 0;
-
+		
 		if (GUI.Button(new Rect((buttonWidth + spacing) * indexX + spacing, (buttonHeight + spacing) * indexY + spacing, buttonWidth, buttonHeight), "Auto"))
 		{
 			Init();
@@ -111,6 +120,7 @@ public class Main : MonoBehaviour
 			double elapsedMS = watch.ElapsedMilliseconds;
 			
 			UnityEngine.Debug.Log(elapsedMS);
+			
 		}
 		indexX++;
 		if (GUI.Button(new Rect((buttonWidth + spacing) * indexX + spacing, (buttonHeight + spacing) * indexY + spacing, buttonWidth, buttonHeight), "StepByStepAuto"))

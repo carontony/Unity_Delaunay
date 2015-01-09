@@ -10,13 +10,13 @@ public static class Geometry
 		//return ContainsPoint(t.circumCenter, t.circumRadius, p);
 		//return InCircle(p, t.a, t.b, t.c);
 	}
-
+	
 	private static bool InCircle(Vector2 p, Vector2 p1, Vector2 p2, Vector2 p3)
 	{ 
 		//Return TRUE if the point (xp,yp) lies inside the circumcircle 
 		//made up by points (x1,y1) (x2,y2) (x3,y3) 
 		//NOTE: A point on the edge is inside the circumcircle 
-
+		
 		if (System.Math.Abs(p1.y - p2.y) < float.Epsilon && System.Math.Abs(p2.y - p3.y) < float.Epsilon)
 		{ 
 			//INCIRCUM - F - Points are coincident !! 
@@ -67,10 +67,10 @@ public static class Geometry
 		
 		return (drsqr < rsqr); 
 	} 
-
+	
 	public static bool ContainsPoint(Vector2 centre, float radius, Vector2 toTest)
 	{
-
+		
 		float dX = Mathf.Abs(toTest.x - centre.x);
 		float dY = Mathf.Abs(toTest.y - centre.y);
 		
@@ -80,33 +80,33 @@ public static class Geometry
 		
 		return (radius < distance);
 	}
-
+	
 	
 	
 	// TODO manque de précision
 	//  doit etre strictement IN
 	public static bool PointInCircle(Vector2 p, Vector2 center, float radius)
 	{
-
-
+		
+		
 		//float.Epsilon
 		//radius = Mathf.Round(radius * 1000f) / 1000f;
 		float distance = (p - center).magnitude;
 		//distance = Mathf.Round(distance * 1000f) / 1000f;
-
+		
 		return distance < (radius - Mathf.Epsilon);
-
+		
 		//if(Mathf.Approximately(distance, radius)) return false;
-
+		
 		//return (distance < radius-Mathf.Epsilon && distance < radius + Mathf.Epsilon);
 	}
-
-
+	
+	
 	public static bool PointInPoly()
 	{
 		return true;
 	}
-
+	
 	public static bool PointInTriangle(Vector2 p, Vector2 p0, Vector2 p1, Vector2 p2)
 	{
 		var s = p0.y * p2.x - p0.x * p2.y + (p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y;
@@ -124,30 +124,30 @@ public static class Geometry
 		}
 		return s > 0 && t > 0 && (s + t) < A;
 	}
-
+	
 	public static bool PointInTrianglev2(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
 	{
 		// Compute vectors        
 		Vector2 v0 = c - a;
 		Vector2 v1 = b - a;
 		Vector2 v2 = p - a;
-			
+		
 		// Compute dot products
 		float dot00 = Vector2.Dot(v0, v0);
 		float dot01 = Vector2.Dot(v0, v1);
 		float dot02 = Vector2.Dot(v0, v2);
 		float dot11 = Vector2.Dot(v1, v1);
 		float dot12 = Vector2.Dot(v1, v2);
-			
+		
 		// Compute barycentric coordinates
 		float invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
 		float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
 		float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-			
+		
 		// Check if point is in triangle
 		return (u >= 0) && (v >= 0) && (u + v < 1);
 	}
-
+	
 	public static Vector3 LineLineIntersection(Vector3 originD, Vector3 directionD, Vector3 originE, Vector3 directionE)
 	{
 		directionD.Normalize();
