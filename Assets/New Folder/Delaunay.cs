@@ -433,7 +433,7 @@ public class Delaunay
 	}
 
 	
-	public void triangleTraversal(Vector2 p, Triangle firstTriangle, Triangle t, Edge previousEdge, ref Poly poly)
+	public void triangleTraversal(Vector2 p, Triangle firstTriangle, Triangle t, Edge previousEdge, ref Cell cell)
 	{
 		//List
 		Edge e = t.edgeList [0].ContainVector(p) && t.edgeList [0] != previousEdge ? t.edgeList [0] : (t.edgeList [1].ContainVector(p) && t.edgeList [1] != previousEdge ? t.edgeList [1] : t.edgeList [2]);
@@ -444,11 +444,11 @@ public class Delaunay
 		Triangle nextTriangle = adjTriangle1 == t ? adjTriangle2 : adjTriangle1;
 		
 		Debug.DrawLine(t.circumCenter, nextTriangle.circumCenter, Color.green, 20);
-		poly.point.Add(nextTriangle.circumCenter);
+		cell.AddEdge(t.circumCenter, nextTriangle.circumCenter);
 		
 		if (nextTriangle != firstTriangle)
 		{
-			triangleTraversal(p, firstTriangle, nextTriangle, e, ref poly);
+			triangleTraversal(p, firstTriangle, nextTriangle, e, ref cell);
 		}
 		// End
 		else
@@ -457,29 +457,29 @@ public class Delaunay
 		}
 	}
 	
-	public Poly createRegion(Vector2 site, Triangle firstTriangle, Triangle t)
+	public Cell createRegion(Vector2 site, Triangle firstTriangle, Triangle t)
 	{
-		Poly poly = new Poly();
-		poly.center = site;
+		Cell cell = new Cell();
+		cell.center = site;
 		
-		triangleTraversal(site, firstTriangle, t, null, ref poly);
+		triangleTraversal(site, firstTriangle, t, null, ref cell);
 
 		Vector2 v0 = site;
-		Vector2 v1 = poly.point[0];
-		Vector2 v2 = poly.point[1];
+		Vector2 v1 = cell.cellEdgeList.ElementAt(0).Value.a;
+		Vector2 v2 = cell.cellEdgeList.ElementAt(0).Value.b;
 		Vector3 surfaceNormal = Vector3.Cross (v2 - v0, v1 - v0).normalized;
 
 		if(surfaceNormal != Vector3.back)
-			poly.point.Reverse();
+			cell.cellEdgeList.Reverse();
 
 		UnityEngine.Debug.Log("::"+surfaceNormal);
 		
-		return poly;
+		return cell;
 	}
 	
-	public List<Poly> createVoronoi()
+	public List<Cell> createVoronoi()
 	{
-		List<Poly> region = new List<Poly>();
+		List<Cell> region = new List<Cell>();
 		
 		for (int i = 4; i<points.Count; i++)
 		{

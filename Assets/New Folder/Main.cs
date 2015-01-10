@@ -13,7 +13,7 @@ public class Main : MonoBehaviour
 {
 	Delaunay myDelaunay;
 	List<Vector2> points = new List<Vector2>();
-	List<Poly> region = new List<Poly>();
+	List<Cell> region = new List<Cell>();
 	
 	
 	
@@ -28,9 +28,9 @@ public class Main : MonoBehaviour
 		myDelaunay.Auto();
 		region=myDelaunay.createVoronoi();
 		
-		foreach(Poly poly in region)
+		foreach(Cell cell in region)
 		{
-			MeshCreator a = new MeshCreator(poly);
+			//MeshCreator a = new MeshCreator(cell);
 			//return;
 		}
 	}
