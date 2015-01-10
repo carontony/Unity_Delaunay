@@ -20,16 +20,21 @@ public class Main : MonoBehaviour
 	// Use this for initialization
 	void Start()
 	{
-		points = CreateRandomPoint(130);
+		//EdgeCeilMaintener.createEdge(new Vector2(1, 2),new Vector2(2, 3));
+		//EdgeCeilMaintener.createEdge(new Vector2(2, 3),new Vector2(1, 2));
+		//return;
+		points = CreateRandomPoint(350);
 		myDelaunay = new Delaunay(20, 20, points);
 		myDelaunay.Auto();
 		region=myDelaunay.createVoronoi();
 		
 		foreach(Poly poly in region)
 		{
+			MeshCreator a = new MeshCreator(poly);
+			//return;
 		}
 	}
-	
+
 	void Init()
 	{
 		string fileName = "savepoints.txt";

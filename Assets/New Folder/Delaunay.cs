@@ -431,43 +431,7 @@ public class Delaunay
 		
 		return false;
 	}
-	
-	public void toto(Edge e, float? _angle)//,Poly a)
-	{
-		if (edgeDebugList.ContainsKey(e))
-			return;
-		edgeDebugList.Add(e, e);
-		
-		Triangle adjTriangle1 = e.triangleList.Count > 0 ? e.triangleList.ElementAt(0).Value : null;
-		
-		List<Edge> edgeList = adjTriangle1.getAdjacentEdgesFromEdge(e);
-		
-		// Nous avons 2 candidat
-		for (int i = 0; i < edgeList.Count; i++)
-		{
-			
-		}
-		
-		
-		Triangle adjTriangle2 = e.triangleList.Count > 1 ? e.triangleList.ElementAt(1).Value : null;
-		
-		
-		
-		float angle = Mathf.DeltaAngle(Mathf.Atan2(adjTriangle1.circumCenter.y, adjTriangle1.circumCenter.x) * Mathf.Rad2Deg,
-		                               Mathf.Atan2(adjTriangle2.circumCenter.y, adjTriangle2.circumCenter.x) * Mathf.Rad2Deg);
-		
-		if (_angle == null || angle <= _angle)
-		{
-			Debug.DrawLine(adjTriangle1.circumCenter, adjTriangle2.circumCenter, Color.green, 10);
-		}
-		
-		
-		// Test des 3 edges
-		for (int i = 0; i < adjTriangle2.edgeList.Count; i++)
-		{
-			toto(adjTriangle2.edgeList [i], angle);
-		}
-	}
+
 	
 	public void triangleTraversal(Vector2 p, Triangle firstTriangle, Triangle t, Edge previousEdge, ref Poly poly)
 	{
@@ -499,6 +463,16 @@ public class Delaunay
 		poly.center = site;
 		
 		triangleTraversal(site, firstTriangle, t, null, ref poly);
+
+		Vector2 v0 = site;
+		Vector2 v1 = poly.point[0];
+		Vector2 v2 = poly.point[1];
+		Vector3 surfaceNormal = Vector3.Cross (v2 - v0, v1 - v0).normalized;
+
+		if(surfaceNormal != Vector3.back)
+			poly.point.Reverse();
+
+		UnityEngine.Debug.Log("::"+surfaceNormal);
 		
 		return poly;
 	}
@@ -516,6 +490,7 @@ public class Delaunay
 				if (t.a == points [i] || t.b == points [i] || t.c == points [i])
 				{
 					region.Add(createRegion(points [i], t, t));
+					break;
 				}
 			}
 		}
