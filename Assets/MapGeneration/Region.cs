@@ -1,19 +1,12 @@
 using UnityEngine;
 using System.Collections;
 
-public class Region : MonoBehaviour
+public class Region
 {
+	public int type;
+	public Color color;
 
-	// Use this for initialization
-	void Start()
-	{
-	
-	}
-	
-	// Update is called once per frame
-	void Update()
-	{
-	
-	}
+	public Cell cell;
+
 }
 

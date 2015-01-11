@@ -433,69 +433,19 @@ public class Delaunay
 	}
 
 	
-	public void triangleTraversal(Vector2 p, Triangle firstTriangle, Triangle t, Edge previousEdge, ref Cell cell)
-	{
-		//List
-		Edge e = t.edgeList [0].ContainVector(p) && t.edgeList [0] != previousEdge ? t.edgeList [0] : (t.edgeList [1].ContainVector(p) && t.edgeList [1] != previousEdge ? t.edgeList [1] : t.edgeList [2]);
-		
-		Triangle adjTriangle1 = e.triangleList.ElementAt(0).Value;
-		Triangle adjTriangle2 = e.triangleList.ElementAt(1).Value;
-		
-		Triangle nextTriangle = adjTriangle1 == t ? adjTriangle2 : adjTriangle1;
-		
-		Debug.DrawLine(t.circumCenter, nextTriangle.circumCenter, Color.green, 20);
-		cell.AddEdge(t.circumCenter, nextTriangle.circumCenter);
-		
-		if (nextTriangle != firstTriangle)
-		{
-			triangleTraversal(p, firstTriangle, nextTriangle, e, ref cell);
-		}
-		// End
-		else
-		{
-			
-		}
-	}
+
 	
-	public Cell createRegion(Vector2 site, Triangle firstTriangle, Triangle t)
+	public List<Vector2> getSites()
 	{
-		Cell cell = new Cell();
-		cell.center = site;
-		
-		triangleTraversal(site, firstTriangle, t, null, ref cell);
+		List<Vector2> site = new List<Vector2>();
 
-		Vector2 v0 = site;
-		Vector2 v1 = cell.cellEdgeList.ElementAt(0).Value.a;
-		Vector2 v2 = cell.cellEdgeList.ElementAt(0).Value.b;
-		Vector3 surfaceNormal = Vector3.Cross (v2 - v0, v1 - v0).normalized;
-
-		if(surfaceNormal != Vector3.back)
-			cell.cellEdgeList.Reverse();
-
-		UnityEngine.Debug.Log("::"+surfaceNormal);
-		
-		return cell;
-	}
-	
-	public List<Cell> createVoronoi()
-	{
-		List<Cell> region = new List<Cell>();
-		
-		for (int i = 4; i<points.Count; i++)
+		// Remove the four first bound point
+		for (int i = 0; i< points.Count; i++)
 		{
-			// TODO Refactor
-			// Find one Triange that contain the point
-			foreach (Triangle t in triangleList.Values)
-			{
-				if (t.a == points [i] || t.b == points [i] || t.c == points [i])
-				{
-					region.Add(createRegion(points [i], t, t));
-					break;
-				}
-			}
+			site.Add(points[i]);
 		}
-		
-		return region;
+
+		return site;
 	}
 	
 	

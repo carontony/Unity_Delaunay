@@ -11,9 +11,11 @@ using System.Xml.Serialization;
 
 public class Main : MonoBehaviour
 {
-	Delaunay myDelaunay;
+	Delaunay delaunay;
+	Voronoi voronoi;
+
 	List<Vector2> points = new List<Vector2>();
-	List<Cell> region = new List<Cell>();
+	List<Cell> cellList = new List<Cell>();
 	
 	
 	
@@ -23,15 +25,17 @@ public class Main : MonoBehaviour
 		//EdgeCeilMaintener.createEdge(new Vector2(1, 2),new Vector2(2, 3));
 		//EdgeCeilMaintener.createEdge(new Vector2(2, 3),new Vector2(1, 2));
 		//return;
-		points = CreateRandomPoint(350);
-		myDelaunay = new Delaunay(20, 20, points);
-		myDelaunay.Auto();
-		region=myDelaunay.createVoronoi();
+		points = CreateRandomPoint(485);
+		delaunay = new Delaunay(20, 20, points);
+		delaunay.Auto();
+
+		voronoi = new Voronoi(delaunay);
+		cellList=voronoi.createVoronoi();
+		//MapGenerator m = new MapGenerator(cellList);
 		
-		foreach(Cell cell in region)
+		foreach(Cell cell in cellList)
 		{
-			//MeshCreator a = new MeshCreator(cell);
-			//return;
+			MeshCreator a = new MeshCreator(cell);
 		}
 	}
 
@@ -53,7 +57,7 @@ public class Main : MonoBehaviour
 		}
 		
 		
-		myDelaunay = new Delaunay(20, 20, points);
+		delaunay = new Delaunay(20, 20, points);
 		
 		
 		
@@ -75,16 +79,16 @@ public class Main : MonoBehaviour
 	void Update()
 	{
 		// Needed for stepByStepAuto
-		if (myDelaunay != null)
-			myDelaunay.Update();
+		if (delaunay != null)
+			delaunay.Update();
 	}
 	
 	void Clear()
 	{
-		if (myDelaunay != null)
-			myDelaunay.Clear();
+		if (delaunay != null)
+			delaunay.Clear();
 		points = CreateRandomPoint(100);
-		myDelaunay = new Delaunay(20, 20, points);
+		delaunay = new Delaunay(20, 20, points);
 	}
 	
 	private List<Vector2> CreateRandomPoint(int polygonNumber)
@@ -101,8 +105,8 @@ public class Main : MonoBehaviour
 	void OnDrawGizmos()
 	{
 		// Needed for showing Gizmo
-		if (myDelaunay != null)
-			myDelaunay.OnDrawGizmos();
+		if (delaunay != null)
+			delaunay.OnDrawGizmos();
 	}
 	
 	void OnGUI()
@@ -117,10 +121,10 @@ public class Main : MonoBehaviour
 		if (GUI.Button(new Rect((buttonWidth + spacing) * indexX + spacing, (buttonHeight + spacing) * indexY + spacing, buttonWidth, buttonHeight), "Auto"))
 		{
 			Init();
-			myDelaunay.delaunayMode = Delaunay.DelaunayMode.auto;
+			delaunay.delaunayMode = Delaunay.DelaunayMode.auto;
 			System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 			watch.Start();
-			myDelaunay.Auto();
+			delaunay.Auto();
 			watch.Stop();
 			double elapsedMS = watch.ElapsedMilliseconds;
 			
@@ -132,17 +136,17 @@ public class Main : MonoBehaviour
 		{
 			_Debug.allowDebug = false;
 			Init();
-			myDelaunay.delaunayMode = Delaunay.DelaunayMode.stepByStepAuto;
+			delaunay.delaunayMode = Delaunay.DelaunayMode.stepByStepAuto;
 		}
 		indexX++;
 		if (GUI.Button(new Rect((buttonWidth + spacing) * indexX + spacing, (buttonHeight + spacing) * indexY + spacing, buttonWidth, buttonHeight), "StepByStep"))
 		{
 			_Debug.allowDebug = true;
-			if (myDelaunay == null)
+			if (delaunay == null)
 				Init();
-			myDelaunay.delaunayMode = Delaunay.DelaunayMode.stepByStep;
-			myDelaunay.StepByStepNext();
-			//myDelaunay.debugTriangleIndex = -1;
+			delaunay.delaunayMode = Delaunay.DelaunayMode.stepByStep;
+			delaunay.StepByStepNext();
+			//delaunay.debugTriangleIndex = -1;
 		}
 		indexX -= 2;
 		indexY++;
@@ -153,18 +157,20 @@ public class Main : MonoBehaviour
 		indexX++;
 		if (GUI.Button(new Rect((buttonWidth + spacing) * indexX + spacing, (buttonHeight + spacing) * indexY + spacing, buttonWidth, buttonHeight), "Show triangle"))
 		{
-			myDelaunay.delaunayMode = Delaunay.DelaunayMode.showTriangle;
-			/*if(myDelaunay.debugTriangleIndex < myDelaunay.triangleList.Count-1)
+			delaunay.delaunayMode = Delaunay.DelaunayMode.showTriangle;
+			/*if(delaunay.debugTriangleIndex < delaunay.triangleList.Count-1)
 			{
-				myDelaunay.debugTriangleIndex++;
+				delaunay.debugTriangleIndex++;
 			}
 			else
-				myDelaunay.debugTriangleIndex = 0;*/
+				delaunay.debugTriangleIndex = 0;*/
 		}
 		indexX++;
 		if (GUI.Button(new Rect((buttonWidth + spacing) * indexX + spacing, (buttonHeight + spacing) * indexY + spacing, buttonWidth, buttonHeight), "View Voronoi"))
 		{
-			myDelaunay.createVoronoi();
+			voronoi = new Voronoi(delaunay);
+			voronoi.createVoronoi();
+
 		}		
 		
 	}
