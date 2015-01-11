@@ -7,6 +7,8 @@ public class MeshCreator
 {
 	public float woodPerlin;
 	List<Region> regionList = new List<Region>();
+
+	Dictionary<int,int> EdgeElevationTraversal = new Dictionary<int,int>(); // Dictionary is used here to know when a vertex is already inserted
 	
 	public Vector2 Contract(Vector2 p, Vector2 centerpoint)
 	{
@@ -37,7 +39,21 @@ public class MeshCreator
 		float notMountain = (float)PerlinNoise((int)cell.center.x, 0, (int)cell.center.y, 5, 3.8f, 0f);
 		r.color = notMountain == 0 && groudRadius >= 0 ? Color.black : r.color;
 
+		if(notMountain == 0 && groudRadius >= 0)
+			propagateElevation(cell);
+
+
+		_Debug.LogOnScreen("0", cell.center);
+
 		return r;
+	}
+
+	public void propagateElevation()
+	{
+		for(int i=0; i < cell.cellEdgeList.Count; i++)
+		{
+			
+		}
 	}
 
 	public MeshCreator(Cell cell)

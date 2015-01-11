@@ -10,6 +10,8 @@ public static class CellEdgeMaintener
 	public static EdgeComparer edgeComparer = new EdgeComparer();
 	public static Dictionary<Vector4, CellEdge> cellEdgeList = new Dictionary<Vector4,CellEdge>(edgeComparer);
 
+	public static int uidIndex = 0;
+
 	public static CellEdge createEdge(Vector2 a, Vector2 b, Cell c)
 	{
 		Vector4 edgeV4 = new Vector4(a.x, a.y, b.x, b.y);
@@ -21,6 +23,7 @@ public static class CellEdgeMaintener
 		{
 			CellEdge ce = new CellEdge(a, b);
 			ce.cellList.Add(c,c);
+			ce.uid = uidIndex++;
 			cellEdgeList.Add(edgeV4, ce); 
 			return ce;
 		}
